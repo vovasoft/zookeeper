@@ -1434,6 +1434,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.myid = myid;
     }
 
+    public long getMyid() {
+        return myid;
+    }
+
     /**
      * Get the number of milliseconds of each tick
      */

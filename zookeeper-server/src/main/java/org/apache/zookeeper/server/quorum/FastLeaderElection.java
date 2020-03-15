@@ -596,6 +596,7 @@ public class FastLeaderElection implements Election {
      * @param manager   Connection manager
      */
     public FastLeaderElection(QuorumPeer self, QuorumCnxManager manager){
+        System.out.println("self="+self.getMyid());
         this.stop = false;
         this.manager = manager;
         starter(self, manager);
