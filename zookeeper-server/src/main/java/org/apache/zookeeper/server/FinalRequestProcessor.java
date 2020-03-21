@@ -98,6 +98,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing request:: " + request);
         }
+        LOG.info("Processing request:: " + request);
         // request.addRQRec(">final");
         long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
         if (request.type == OpCode.ping) {

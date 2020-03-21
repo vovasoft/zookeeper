@@ -635,6 +635,7 @@ public class QuorumCnxManager {
      *  @return boolean success indication
      */
     synchronized private boolean connectOne(long sid, InetSocketAddress electionAddr){
+        LOG.info("VOVA-尝试连接一个Server，myid={}，sid={}",self.getMyid(),sid);
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return true;

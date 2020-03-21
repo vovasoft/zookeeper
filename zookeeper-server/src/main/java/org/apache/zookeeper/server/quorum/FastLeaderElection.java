@@ -36,6 +36,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.eclipse.jetty.util.log.Log;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -450,6 +452,7 @@ public class FastLeaderElection implements Election {
             public void run() {
                 while (!stop) {
                     try {
+                        Thread.sleep(3000);
                         ToSend m = sendqueue.poll(3000, TimeUnit.MILLISECONDS);
                         if(m == null) continue;
 
@@ -657,6 +660,7 @@ public class FastLeaderElection implements Election {
      * Send notifications to all peers upon a change in our vote
      */
     private void sendNotifications() {
+        LOG.info("VOVA-准备发送消息-sendNotifications，myid={}, self.getCurrentAndNextConfigVoters={}",self.getMyid(), self.getCurrentAndNextConfigVoters());
         for (long sid : self.getCurrentAndNextConfigVoters()) {
             QuorumVerifier qv = self.getQuorumVerifier();
             ToSend notmsg = new ToSend(ToSend.mType.notification,
@@ -673,6 +677,11 @@ public class FastLeaderElection implements Election {
                       " (myid), 0x" + Long.toHexString(proposedEpoch) + " (n.peerEpoch)");
             }
             sendqueue.offer(notmsg);
+        }
+        
+        LOG.info("VOVA-准备发送消息-sendNotifications,sendqueue.size()={}",sendqueue.size());
+        for (ToSend toSend : sendqueue) {
+            LOG.info("VOVA-准备发送消息-sendNotifications加入消息队列，sid={}",toSend.sid);
         }
     }
 
@@ -699,6 +708,7 @@ public class FastLeaderElection implements Election {
     protected boolean totalOrderPredicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
         LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: 0x" +
                 Long.toHexString(newZxid) + ", proposed zxid: 0x" + Long.toHexString(curZxid));
+        LOG.info("VOVA-进行校验-totalOrderPredicate：newId={},self.getQuorumVerifier().getWeight(newId)={}",newId,self.getQuorumVerifier().getWeight(newId));
         if(self.getQuorumVerifier().getWeight(newId) == 0){
             return false;
         }
@@ -788,6 +798,7 @@ public class FastLeaderElection implements Election {
                     + Long.toHexString(zxid) + " (newzxid), " + proposedLeader
                     + " (oldleader), 0x" + Long.toHexString(proposedZxid) + " (oldzxid)");
         }
+        LOG.info("VOVA-开始更新leader-leader{},zxid={},epoch={}",leader,zxid,epoch);
         proposedLeader = leader;
         proposedZxid = zxid;
         proposedEpoch = epoch;
@@ -880,6 +891,7 @@ public class FastLeaderElection implements Election {
 
             synchronized(this){
                 logicalclock.incrementAndGet();
+                LOG.info("VOVA--开始更新leader为自己！！！");
                 updateProposal(getInitId(), getInitLastLoggedZxid(), getPeerEpoch());
             }
 
@@ -930,10 +942,12 @@ public class FastLeaderElection implements Election {
                         if (n.electionEpoch > logicalclock.get()) {
                             logicalclock.set(n.electionEpoch);
                             recvset.clear();
+                            LOG.info("VOVA-开始更新leader，n.leader={}",n.leader);
                             if(totalOrderPredicate(n.leader, n.zxid, n.peerEpoch,
                                     getInitId(), getInitLastLoggedZxid(), getPeerEpoch())) {
                                 updateProposal(n.leader, n.zxid, n.peerEpoch);
                             } else {
+                                LOG.info("VOVA--开始更新leader为自己！！！");
                                 updateProposal(getInitId(),
                                         getInitLastLoggedZxid(),
                                         getPeerEpoch());
